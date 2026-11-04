@@ -1,5 +1,5 @@
 #!/bin/sh
-# Starts wallpi on http://localhost:8080 and opens it in the browser.
+# Starts wallpi on http://localhost:9447 and opens it in the browser.
 # Builds first when no build exists or when called with --build.
 set -e
 
@@ -10,8 +10,8 @@ if [ "$1" = "--build" ] || [ ! -f target/quarkus-app/quarkus-run.jar ]; then
 fi
 
 (
-    until curl -s -o /dev/null http://localhost:8080/; do sleep 0.5; done
-    open http://localhost:8080
+    until curl -s -o /dev/null http://localhost:9447/; do sleep 0.5; done
+    open http://localhost:9447
 ) &
 
 # run from wallpi/ so the relative frontend path ../app/src resolves
