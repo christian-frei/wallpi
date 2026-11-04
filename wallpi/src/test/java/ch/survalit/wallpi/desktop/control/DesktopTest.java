@@ -38,7 +38,7 @@ class DesktopTest {
     static final String IMAGE = "ENTERPRISE-NCC-1701-D";
     static final int TRUNCATED_LENGTH = 4096;
 
-    record Fixture(Desktop desktop, FakeCatalog catalog, Path folder, HttpServer originals,
+    record Fixture(Desktop desktop, FakeCatalog catalog, Path folder, Path store, HttpServer originals,
                    List<String> downloads, List<List<String>> commands) {
 
         URI original(String path) {
@@ -94,7 +94,9 @@ class DesktopTest {
         desktop.pictures.folder = home.resolve("Pictures/wallpi");
         desktop.desktopPicture = new DesktopPicture();
         desktop.desktopPicture.shell = command -> record(commands, command);
-        fixture = new Fixture(desktop, (FakeCatalog) desktop.catalog, desktop.pictures.folder, originals, downloads, commands);
+        desktop.desktopPicture.store = home.resolve("Library/Application Support/com.apple.wallpaper/Store/Index.plist");
+        fixture = new Fixture(desktop, (FakeCatalog) desktop.catalog, desktop.pictures.folder, desktop.desktopPicture.store,
+                originals, downloads, commands);
         fixture.resolveTo("/full/enterprise.jpg");
     }
 
@@ -147,7 +149,7 @@ class DesktopTest {
         assertThat(outcome.value()).isEqualTo(fixture.expectedFile());
         assertThat(content(outcome.value())).isEqualTo("CACHED");
         assertThat(fixture.downloads()).isEmpty();
-        assertThat(fixture.commands()).hasSize(1);
+        assertThat(fixture.commands()).hasSize(3);
     }
 
     static void setsEveryDesktop(Fixture fixture, Outcome outcome) {
@@ -157,7 +159,11 @@ class DesktopTest {
                         set picture of eachDesktop to POSIX file "%s"
                     end repeat
                 end tell""".formatted(fixture.expectedFile().toAbsolutePath());
-        assertThat(fixture.commands()).containsExactly(List.of("osascript", "-e", script));
+        assertThat(fixture.commands()).containsExactly(
+                List.of("osascript", "-e", script),
+                List.of("osascript", "-l", "JavaScript", "-e", DesktopPicture.EVERY_SPACE,
+                        fixture.store().toString(), fixture.expectedFile().toString()),
+                List.of("killall", "WallpaperAgent"));
         assertThat(outcome.value()).isEqualTo(fixture.expectedFile());
     }
 
@@ -203,6 +209,12 @@ class DesktopTest {
 
     static void refusalKeepsFile(Fixture fixture, Outcome outcome) {
         rejected(outcome.error(), 500, "macOS refused to set the desktop picture: execution error: System Events got an error: Not authorized. (-1743)");
+        assertThat(fixture.storedFiles()).containsExactly(fixture.expectedFile());
+        fixture.desktop().desktopPicture.shell = command -> command.contains("JavaScript")
+                ? new DesktopPicture.Execution(1, "execution error: Error: cannot write the wallpaper store (-2700)\n")
+                : new DesktopPicture.Execution(0, "");
+        var inSpaces = Outcome.of(() -> fixture.desktop().apply("star-trek", "enterprise"));
+        rejected(inSpaces.error(), 500, "macOS refused to set the desktop picture in every Space: execution error: Error: cannot write the wallpaper store (-2700)");
         assertThat(fixture.storedFiles()).containsExactly(fixture.expectedFile());
     }
 

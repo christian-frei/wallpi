@@ -1,5 +1,5 @@
 /// # Wallpi
-/// > Browse wallpapers from configured image APIs and put the chosen one, at its largest, on every screen of this Mac.
+/// > Browse wallpapers from configured image APIs and put the chosen one, at its largest, on every screen and in every Space of this Mac.
 ///
 /// ## Components
 /// - `desktop` may call `wallpapers`; never the reverse.
@@ -24,6 +24,7 @@
 /// - D5 — The server is split into `wallpapers` and `desktop`. _(why: finding images and changing the Mac are separate responsibilities; rejected: one server BC)_
 /// - D6 — The frontend lives in `app/src` and is served by the Quarkus service. _(why: keeps the web-components layout and one local origin without CORS; rejected: placing it in META-INF/resources)_
 /// - D7 — The Unsplash access key is read from `~/.wallpi/unsplash.json` as `{"accessKey": …}`, the only place it comes from. _(why: one place next to the sources file, no shell setup; rejected: the `UNSPLASH_ACCESS_KEY` environment variable of D2, the variable overriding the file, a template file written by the app)_
+/// - D8 — Every Space gets the picture by writing it into macOS's wallpaper store `~/Library/Application Support/com.apple.wallpaper/Store/Index.plist` and restarting `WallpaperAgent`, after System Events has set the visible Spaces. _(why: System Events and NSWorkspace only reach the visible Space of each screen; rejected: switching through the Spaces, leaving the other Spaces stale)_ — the store format is undocumented and may change with a macOS update
 ///
 /// ## Stack
 /// - microprofile-server (Quarkus) · base package `ch.survalit.wallpi` · service module `wallpi/`, system tests `wallpi-st/`
