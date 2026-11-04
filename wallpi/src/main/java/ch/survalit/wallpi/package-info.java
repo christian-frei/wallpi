@@ -18,11 +18,12 @@
 ///
 /// ## Decisions
 /// - D1 — Wallhaven and Unsplash are the providers, told apart by the source url's host. _(why: both cover Star Trek and nature, Wallhaven without a key; rejected: NASA Image Library)_
-/// - D2 — The Unsplash access key comes from the `UNSPLASH_ACCESS_KEY` environment variable. _(why: keeps the secret out of the sources file; rejected: a key field in the sources JSON)_
+/// - D2 — The Unsplash access key comes from the `UNSPLASH_ACCESS_KEY` environment variable. _(why: keeps the secret out of the sources file; rejected: a key field in the sources JSON)_ — superseded by D7
 /// - D3 — Sources live in `~/.wallpi/sources.json`, read anew on every listing. _(why: editable without a rebuild; rejected: a sources file bundled in the app)_
 /// - D4 — Every applied original is kept in `~/Pictures/wallpi`. _(why: re-applying skips the download; rejected: a temp folder holding only the current image)_
 /// - D5 — The server is split into `wallpapers` and `desktop`. _(why: finding images and changing the Mac are separate responsibilities; rejected: one server BC)_
 /// - D6 — The frontend lives in `app/src` and is served by the Quarkus service. _(why: keeps the web-components layout and one local origin without CORS; rejected: placing it in META-INF/resources)_
+/// - D7 — The Unsplash access key is read from `~/.wallpi/unsplash.json` as `{"accessKey": …}`, the only place it comes from. _(why: one place next to the sources file, no shell setup; rejected: the `UNSPLASH_ACCESS_KEY` environment variable of D2, the variable overriding the file, a template file written by the app)_
 ///
 /// ## Stack
 /// - microprofile-server (Quarkus) · base package `ch.survalit.wallpi` · service module `wallpi/`, system tests `wallpi-st/`

@@ -41,10 +41,6 @@ public @interface Requirement {
         R2_2("R2.2", "When a further page of a source is requested, the BC shall return that page of the same query together with whether another page exists."),
         /// When a Wallhaven source is queried, the BC shall keep the source url's query parameters and return only wallpapers rated safe for work.
         R2_3("R2.3", "When a Wallhaven source is queried, the BC shall keep the source url's query parameters and return only wallpapers rated safe for work."),
-        /// When an Unsplash source is queried, the BC shall authenticate with the access key from UNSPLASH_ACCESS_KEY and return each wallpaper with the photographer's name and profile link.
-        R2_4("R2.4", "When an Unsplash source is queried, the BC shall authenticate with the access key from UNSPLASH_ACCESS_KEY and return each wallpaper with the photographer's name and profile link."),
-        /// If no Unsplash access key is configured, then the BC shall reject wallpaper requests for Unsplash sources with a reason naming the missing key, and keep serving Wallhaven sources.
-        R2_5("R2.5", "If no Unsplash access key is configured, then the BC shall reject wallpaper requests for Unsplash sources with a reason naming the missing key, and keep serving Wallhaven sources."),
         /// If the provider is unreachable or answers with an error, then the BC shall reject the request with a reason naming the source.
         R2_6("R2.6", "If the provider is unreachable or answers with an error, then the BC shall reject the request with a reason naming the source."),
         /// If the requested source does not exist or is invalid or unsupported, then the BC shall reject the request.
@@ -55,6 +51,10 @@ public @interface Requirement {
         R2_9("R2.9", "If a season is requested for a source that is not seasonal, then the BC shall reject the request."),
         /// If the requested season is not spring, summer, autumn or winter, then the BC shall reject the request.
         R2_10("R2.10", "If the requested season is not spring, summer, autumn or winter, then the BC shall reject the request."),
+        /// When an Unsplash source is queried, the BC shall authenticate with the access key read anew from ~/.wallpi/unsplash.json and return each wallpaper with the photographer's name and profile link.
+        R2_11("R2.11", "When an Unsplash source is queried, the BC shall authenticate with the access key read anew from ~/.wallpi/unsplash.json and return each wallpaper with the photographer's name and profile link."),
+        /// If the Unsplash key file is missing, is not valid JSON or has no access key, then the BC shall reject wallpaper requests for Unsplash sources with a reason naming the file, and keep serving Wallhaven sources.
+        R2_12("R2.12", "If the Unsplash key file is missing, is not valid JSON or has no access key, then the BC shall reject wallpaper requests for Unsplash sources with a reason naming the file, and keep serving Wallhaven sources."),
         /// When the original of a Wallhaven wallpaper is resolved, the BC shall return the location and resolution of its full-resolution image.
         R3_1("R3.1", "When the original of a Wallhaven wallpaper is resolved, the BC shall return the location and resolution of its full-resolution image."),
         /// When the original of an Unsplash wallpaper is resolved, the BC shall return the location and resolution of its raw image and register the download with Unsplash.

@@ -4,16 +4,21 @@ import ch.survalit.wallpi.wallpapers.entity.Provider;
 import ch.survalit.wallpi.wallpapers.entity.Source;
 import ch.survalit.wallpi.wallpapers.entity.Wallpaper;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.json.Json;
 import jakarta.json.JsonArray;
+import jakarta.json.JsonException;
 import jakarta.json.JsonObject;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.ServiceUnavailableException;
 import jakarta.ws.rs.core.Response.Status;
+import java.io.IOException;
+import java.io.StringReader;
 import java.net.URI;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
-import java.util.Optional;
 import module java.net.http;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
@@ -22,14 +27,14 @@ import org.eclipse.microprofile.config.inject.ConfigProperty;
 @ApplicationScoped
 public class Unsplash {
 
-    static final String MISSING_KEY = "Unsplash access key is missing: set the UNSPLASH_ACCESS_KEY environment variable";
+    static final String ACCESS_KEY = "accessKey";
 
     @ConfigProperty(name = "wallpi.unsplash.uri", defaultValue = "https://api.unsplash.com")
     URI base;
 
-    /// Mapped from the `UNSPLASH_ACCESS_KEY` environment variable by MicroProfile Config.
-    @ConfigProperty(name = "unsplash.access.key")
-    Optional<String> accessKey;
+    /// Read on every request, so a key added or changed by hand works without a restart.
+    @ConfigProperty(name = "wallpi.unsplash.key-file")
+    Path keyFile;
 
     public Wallpaper.Page page(Source source, int number) {
         var query = ImageApi.append(ImageApi.query(source.url(), "page"), "page=" + number);
@@ -69,9 +74,27 @@ public class Unsplash {
     }
 
     String key() {
-        return accessKey
-                .filter(key -> !key.isBlank())
-                .orElseThrow(() -> new ServiceUnavailableException(MISSING_KEY, Reasons.of(Status.SERVICE_UNAVAILABLE, MISSING_KEY)));
+        if (Files.notExists(keyFile)) {
+            throw unavailable("Unsplash access key is missing: create %s with {\"accessKey\": \"…\"}".formatted(keyFile));
+        }
+        try (var reader = Json.createReader(new StringReader(Files.readString(keyFile)))) {
+            if (!(reader.readValue() instanceof JsonObject json)) {
+                throw unavailable("Unsplash key file %s is not valid JSON: expected an object".formatted(keyFile));
+            }
+            var key = json.getString(ACCESS_KEY, "").strip();
+            if (key.isEmpty()) {
+                throw unavailable("Unsplash key file %s has no accessKey".formatted(keyFile));
+            }
+            return key;
+        } catch (JsonException e) {
+            throw unavailable("Unsplash key file %s is not valid JSON: %s".formatted(keyFile, e.getMessage()));
+        } catch (IOException e) {
+            throw unavailable("Unsplash key file %s cannot be read: %s".formatted(keyFile, e));
+        }
+    }
+
+    static ServiceUnavailableException unavailable(String reason) {
+        return new ServiceUnavailableException(reason, Reasons.of(Status.SERVICE_UNAVAILABLE, reason));
     }
 
     static boolean hasNextLink(HttpResponse<String> response) {

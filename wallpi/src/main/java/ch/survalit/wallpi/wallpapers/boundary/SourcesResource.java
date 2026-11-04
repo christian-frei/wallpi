@@ -38,7 +38,7 @@ public class SourcesResource {
 
     @GET
     @Path("{sourceId}/wallpapers")
-    @Requirement({R2_1, R2_2, R2_3, R2_4, R2_5, R2_6, R2_7, R2_8, R2_9, R2_10})
+    @Requirement({R2_1, R2_2, R2_3, R2_6, R2_7, R2_8, R2_9, R2_10, R2_11, R2_12})
     public Response listWallpapers(@PathParam("sourceId") String sourceId, @QueryParam("page") @DefaultValue("1") int page,
                                    @QueryParam("season") @DefaultValue("") String season) {
         return Response.ok(catalog.page(sourceId, page, season).toJSON()).build();

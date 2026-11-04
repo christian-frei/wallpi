@@ -46,15 +46,24 @@ Sources are read from `~/.wallpi/sources.json` on every page load; a default wit
   {
     "title": "Nature on Unsplash",
     "description": "Landscape photography from Unsplash",
-    "url": "https://api.unsplash.com/search/photos?query=nature%20landscape&orientation=landscape"
+    "url": "https://api.unsplash.com/search/photos?query=nature%20landscape&orientation=landscape",
+    "seasonal": true
   }
 ]
 ```
 
+`"seasonal": true` adds a season filter to the source's section.
+
+Unsplash sources need the app's Access Key in `~/.wallpi/unsplash.json`; it is read on every request, so no restart is needed. Without it, Unsplash sections show an error and Wallhaven keeps working:
+
+```json
+{"accessKey": "your-unsplash-access-key"}
+```
+
 | Setting | Default | Purpose |
 |---|---|---|
-| `UNSPLASH_ACCESS_KEY` | — | Unsplash API access key; without it Unsplash sections show an error, Wallhaven keeps working |
 | `wallpi.sources` | `~/.wallpi/sources.json` | sources file |
+| `wallpi.unsplash.key-file` | `~/.wallpi/unsplash.json` | Unsplash access key file |
 | `wallpi.pictures` | `~/Pictures/wallpi` | where applied originals are stored |
 
 Override `wallpi.*` settings with environment variables, e.g. `WALLPI_PICTURES=~/Desktop/walls ./start.sh`.

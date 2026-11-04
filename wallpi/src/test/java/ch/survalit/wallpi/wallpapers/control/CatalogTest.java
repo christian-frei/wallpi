@@ -16,7 +16,6 @@ import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Map;
-import java.util.Optional;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
@@ -69,7 +68,7 @@ class CatalogTest {
         catalog.wallhaven.base = stub.uri();
         catalog.unsplash = new Unsplash();
         catalog.unsplash.base = stub.uri();
-        catalog.unsplash.accessKey = Optional.of("duke");
+        catalog.unsplash.keyFile = Files.writeString(home.resolve("unsplash.json"), "{\"accessKey\": \"duke\"}");
         fixture = new Fixture(catalog, stub);
     }
 
@@ -95,10 +94,10 @@ class CatalogTest {
                         expect(CatalogTest::lastPage)),
                 arguments(R2_3, "Star Trek", 1, "", arrange(f -> f.stub().reply("/api/v1/search", search(1, 1, item("enterprise", "sfw"), item("orion", "sketchy"), item("risa", "nsfw")))),
                         expect(CatalogTest::safeForWorkWithSourceQuery)),
-                arguments(R2_4, "Unsplash Nature", 1, "", arrange(f -> f.stub().reply("/search/photos", unsplashSearch(2, photo("fjord", "https://images.unsplash.com/download")))),
+                arguments(R2_11, "Unsplash Nature", 1, "", arrange(f -> f.stub().reply("/search/photos", unsplashSearch(2, photo("fjord", "https://images.unsplash.com/download")))),
                         expect(CatalogTest::attributedAndAuthorized)),
-                arguments(R2_5, "Unsplash Nature", 1, "", arrange(CatalogTest::withoutUnsplashKey),
-                        expect(CatalogTest::missingKeySparesWallhaven)),
+                arguments(R2_12, "Unsplash Nature", 1, "", arrange(CatalogTest::withoutKeyFile),
+                        expect(CatalogTest::unusableKeyFileSparesWallhaven)),
                 arguments(R2_6, "Star Trek", 1, "", arrange(f -> f.stub().reply("/api/v1/search", 500, "{}", Map.of())),
                         expect(CatalogTest::providerFailureNamesSource)),
                 arguments(R2_7, "Elsewhere", 1, "", arrange(_ -> {}),
@@ -166,18 +165,46 @@ class CatalogTest {
         var request = fixture.stub().last("/search/photos");
         assertThat(request.headers().getFirst("Authorization")).isEqualTo("Client-ID duke");
         assertThat(request.query().split("&")).containsExactly("query=nature", "per_page=2", "page=1");
+        writeKeyFile(fixture, "{\"accessKey\": \"worf\"}");
+        fixture.catalog().page(fixture.idOf("Unsplash Nature"), 1, "");
+        assertThat(fixture.stub().last("/search/photos").headers().getFirst("Authorization")).isEqualTo("Client-ID worf");
     }
 
-    static void withoutUnsplashKey(Fixture fixture) {
-        fixture.catalog().unsplash.accessKey = Optional.empty();
+    static void withoutKeyFile(Fixture fixture) {
+        deleteKeyFile(fixture);
         fixture.stub().reply("/api/v1/search", search(1, 1, item("enterprise", "sfw")));
     }
 
-    static void missingKeySparesWallhaven(Fixture fixture, Outcome<Wallpaper.Page> outcome) {
-        rejected(outcome.error(), 503, "UNSPLASH_ACCESS_KEY");
+    static void unusableKeyFileSparesWallhaven(Fixture fixture, Outcome<Wallpaper.Page> outcome) {
+        var keyFile = fixture.catalog().unsplash.keyFile;
+        rejected(outcome.error(), 503, "Unsplash access key is missing: create %s with {\"accessKey\": \"…\"}".formatted(keyFile));
+        writeKeyFile(fixture, "{\"accessKey\": ");
+        rejected(unsplashPage(fixture).error(), 503, "Unsplash key file %s is not valid JSON".formatted(keyFile));
+        writeKeyFile(fixture, "{\"accessKey\": \"  \"}");
+        rejected(unsplashPage(fixture).error(), 503, "Unsplash key file %s has no accessKey".formatted(keyFile));
         assertThat(fixture.stub().received).noneMatch(request -> request.path().equals("/search/photos"));
         var wallhaven = fixture.catalog().page(fixture.idOf("Star Trek"), 1, "");
         assertThat(wallhaven.wallpapers()).extracting(Wallpaper::id).containsExactly("enterprise");
+    }
+
+    static Outcome<Wallpaper.Page> unsplashPage(Fixture fixture) {
+        return Outcome.of(() -> fixture.catalog().page(fixture.idOf("Unsplash Nature"), 1, ""));
+    }
+
+    static void writeKeyFile(Fixture fixture, String content) {
+        try {
+            Files.writeString(fixture.catalog().unsplash.keyFile, content);
+        } catch (IOException e) {
+            throw new AssertionError(e);
+        }
+    }
+
+    static void deleteKeyFile(Fixture fixture) {
+        try {
+            Files.delete(fixture.catalog().unsplash.keyFile);
+        } catch (IOException e) {
+            throw new AssertionError(e);
+        }
     }
 
     static void providerFailureNamesSource(Fixture fixture, Outcome<Wallpaper.Page> outcome) {

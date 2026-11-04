@@ -23,13 +23,13 @@
 /// - R2.1 — When the wallpapers of a source are requested, the BC shall return the first page of the provider's results, each with a wallpaper id, a preview image and the original's resolution.
 /// - R2.2 — When a further page of a source is requested, the BC shall return that page of the same query together with whether another page exists.
 /// - R2.3 — When a Wallhaven source is queried, the BC shall keep the source url's query parameters and return only wallpapers rated safe for work.
-/// - R2.4 — When an Unsplash source is queried, the BC shall authenticate with the access key from `UNSPLASH_ACCESS_KEY` and return each wallpaper with the photographer's name and profile link. _(why: Unsplash API guidelines require attribution)_
-/// - R2.5 — If no Unsplash access key is configured, then the BC shall reject wallpaper requests for Unsplash sources with a reason naming the missing key, and keep serving Wallhaven sources.
 /// - R2.6 — If the provider is unreachable or answers with an error, then the BC shall reject the request with a reason naming the source.
 /// - R2.7 — If the requested source does not exist or is invalid or unsupported, then the BC shall reject the request.
 /// - R2.8 — When the wallpapers of a seasonal source are requested for a season, the BC shall add the season's name to the source's search terms.
 /// - R2.9 — If a season is requested for a source that is not seasonal, then the BC shall reject the request.
 /// - R2.10 — If the requested season is not spring, summer, autumn or winter, then the BC shall reject the request.
+/// - R2.11 — When an Unsplash source is queried, the BC shall authenticate with the access key read anew from `~/.wallpi/unsplash.json` and return each wallpaper with the photographer's name and profile link. _(why: Unsplash API guidelines require attribution)_
+/// - R2.12 — If the Unsplash key file is missing, is not valid JSON or has no access key, then the BC shall reject wallpaper requests for Unsplash sources with a reason naming the file, and keep serving Wallhaven sources.
 ///
 /// ### R3: Resolve original
 /// - R3.1 — When the original of a Wallhaven wallpaper is resolved, the BC shall return the location and resolution of its full-resolution image.
@@ -41,6 +41,7 @@
 ///
 /// ## Out of scope
 /// - Editing sources from the UI — the JSON file is edited by hand.
+/// - Creating or writing the Unsplash key file — it is created by hand.
 /// - Providers other than Wallhaven and Unsplash.
 /// - Caching provider results.
 package ch.survalit.wallpi.wallpapers;
