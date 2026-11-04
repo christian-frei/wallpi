@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>wallpi</title>
+    <link rel="stylesheet" href="/tokens.css">
+    <link rel="stylesheet" href="/style.css">
+    <script type="importmap">
+    {
+      "imports": {
+        "lit-html": "/libs/lit-html.js",
+        "@reduxjs/toolkit": "/reduction.js"
+      }
+    }
+    </script>
+    <script type="module" src="/app.js"></script>
+</head>
+<body>
+    <a class="skip-link" href="#content">Skip to wallpapers</a>
+    <header>
+        <h1>wallpi</h1>
+        <p>Choose a wallpaper to put it on every screen.</p>
+    </header>
+    <main id="content">
+        <section class="view"></section>
+    </main>
+</body>
+</html>

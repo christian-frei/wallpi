@@ -1,0 +1,38 @@
+:root {
+    color-scheme: light dark;
+
+    --color-background: oklch(97% 0.01 250);
+    --color-surface: oklch(100% 0 0);
+    --color-text: oklch(25% 0.02 250);
+    --color-muted: oklch(45% 0.02 250);
+    --color-primary: oklch(48% 0.15 255);
+    --color-applied: oklch(45% 0.13 150);
+    --color-error: oklch(48% 0.18 27);
+    --color-focus: oklch(60% 0.2 255);
+
+    --font-body: system-ui, -apple-system, "Segoe UI", sans-serif;
+    --font-size-base: clamp(0.95rem, 0.9rem + 0.25vw, 1.05rem);
+    --font-size-title: clamp(1.6rem, 1.2rem + 1.5vw, 2.4rem);
+    --font-size-heading: clamp(1.2rem, 1rem + 0.8vw, 1.6rem);
+
+    --spacing-xs: 0.25rem;
+    --spacing-sm: 0.5rem;
+    --spacing-md: 1rem;
+    --spacing-lg: 2rem;
+
+    --radius-md: 0.75rem;
+    --card-min-width: 16rem;
+    --focus-ring: 3px solid var(--color-focus);
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --color-background: oklch(18% 0.02 260);
+        --color-surface: oklch(24% 0.025 260);
+        --color-text: oklch(93% 0.01 250);
+        --color-muted: oklch(75% 0.02 250);
+        --color-primary: oklch(75% 0.12 255);
+        --color-applied: oklch(78% 0.14 150);
+        --color-error: oklch(75% 0.15 27);
+    }
+}
