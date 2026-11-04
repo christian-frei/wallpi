@@ -6,7 +6,7 @@
 ## Capabilities
 - **wallpapers** — offer the configured wallpaper sources and the wallpapers each one provides, down to the largest available original · [`spec`](wallpi/src/main/java/ch/survalit/wallpi/wallpapers/package-info.java)
 - **desktop** — put a chosen wallpaper's largest original on every screen of this Mac · [`spec`](wallpi/src/main/java/ch/survalit/wallpi/desktop/package-info.java)
-- **gallery** — show every configured source as a section of wallpaper cards and apply the card that is chosen · [`spec`](app/src/gallery/package-info.md)
+- **gallery** — list the configured sources, show the wallpaper cards of the chosen one, and put the previewed wallpaper on every screen · [`spec`](app/src/gallery/package-info.md)
 
 ## Components
 <!-- projection of the system doc's ## Components wiring; nodes = BCs, edges = declared calls/events; never inferred from code -->
