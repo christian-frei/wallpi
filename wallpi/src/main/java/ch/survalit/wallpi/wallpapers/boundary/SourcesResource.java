@@ -28,7 +28,7 @@ public class SourcesResource {
     Catalog catalog;
 
     @GET
-    @Requirement({R1_1, R1_2, R1_3, R1_4, R1_5, R1_6, R1_7})
+    @Requirement({R1_1, R1_2, R1_3, R1_4, R1_5, R1_6, R1_7, R1_8, R1_9, R1_10})
     public Response listSources() {
         var listed = sources.all().stream()
                 .map(Source::toJSON)
@@ -38,9 +38,10 @@ public class SourcesResource {
 
     @GET
     @Path("{sourceId}/wallpapers")
-    @Requirement({R2_1, R2_2, R2_3, R2_4, R2_5, R2_6, R2_7})
-    public Response listWallpapers(@PathParam("sourceId") String sourceId, @QueryParam("page") @DefaultValue("1") int page) {
-        return Response.ok(catalog.page(sourceId, page).toJSON()).build();
+    @Requirement({R2_1, R2_2, R2_3, R2_4, R2_5, R2_6, R2_7, R2_8, R2_9, R2_10})
+    public Response listWallpapers(@PathParam("sourceId") String sourceId, @QueryParam("page") @DefaultValue("1") int page,
+                                   @QueryParam("season") @DefaultValue("") String season) {
+        return Response.ok(catalog.page(sourceId, page, season).toJSON()).build();
     }
 
     @GET

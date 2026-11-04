@@ -1,8 +1,12 @@
 import BElement from "../../BElement.js";
 import { html } from "lit-html";
-import { applyWallpaper, keyOf, loadMore } from "../control/GalleryControl.js";
+import { applyWallpaper, filterBySeason, keyOf, loadMore, SEASONS } from "../control/GalleryControl.js";
 
 const UNSPLASH_REFERRAL = "utm_source=wallpi&utm_medium=referral";
+const SEASON_CHOICES = [
+    { value: "", label: "All seasons" },
+    ...SEASONS.map(season => ({ value: season, label: season[0].toUpperCase() + season.slice(1) }))
+];
 
 class GallerySection extends BElement {
 
@@ -24,6 +28,7 @@ class GallerySection extends BElement {
         <section aria-labelledby=${headingId} aria-busy=${section.loading}>
             <h2 id=${headingId}>${source.title}</h2>
             <p>${source.description}</p>
+            ${source.seasonal ? this.seasonFilter() : ""}
             ${source.status === "valid" ? "" : html`<p role="alert" class="error">${source.reason}</p>`}
             ${section.error ? html`<p role="alert" class="error">${section.error}</p>` : ""}
             <ul class="cards">
@@ -34,6 +39,22 @@ class GallerySection extends BElement {
                 ? html`<button type="button" class="more" @click=${_ => loadMore(source.id)}>Load more ${source.title} wallpapers</button>`
                 : ""}
         </section>
+        `;
+    }
+
+    seasonFilter() {
+        const { source, section } = this.state;
+        return html`
+        <fieldset class="seasons">
+            <legend>Season</legend>
+            ${SEASON_CHOICES.map(({ value, label }) => html`
+            <label>
+                <input type="radio" name="season-${source.id}" value=${value}
+                       .checked=${section.season === value}
+                       @change=${_ => filterBySeason(source.id, value)}>
+                ${label}
+            </label>`)}
+        </fieldset>
         `;
     }
 

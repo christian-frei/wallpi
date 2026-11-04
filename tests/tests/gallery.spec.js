@@ -6,10 +6,10 @@ const { test, expect } = require('@playwright/test');
 const PREVIEW = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="10"/>';
 
 const SOURCES = [
-  { id: 'trek', title: 'Star Trek', description: 'Starships and the final frontier', status: 'valid' },
-  { id: 'fjords', title: 'Nature on Unsplash', description: 'Fjords and forests', status: 'valid' },
-  { id: 'broken', title: 'No Url', description: 'forgot the url', status: 'invalid', reason: 'missing url' },
-  { id: 'elsewhere', title: 'Elsewhere', description: 'not an image API', status: 'unsupported',
+  { id: 'trek', title: 'Star Trek', description: 'Starships and the final frontier', seasonal: false, status: 'valid' },
+  { id: 'fjords', title: 'Nature on Unsplash', description: 'Fjords and forests', seasonal: true, status: 'valid' },
+  { id: 'broken', title: 'No Url', description: 'forgot the url', seasonal: false, status: 'invalid', reason: 'missing url' },
+  { id: 'elsewhere', title: 'Elsewhere', description: 'not an image API', seasonal: false, status: 'unsupported',
     reason: 'unsupported host example.com, expected wallhaven.cc or api.unsplash.com' },
 ];
 
@@ -36,10 +36,20 @@ const gate = () => {
 
 const json = (route, status, body) => route.fulfill({ status, contentType: 'application/json', body: JSON.stringify(body) });
 
+/** Two Unsplash wallpapers per page whose photographer names the season, so a page shows which filter it came from. */
+const seasonalPage = (season, number) => ({
+  page: number,
+  hasMore: number < 2,
+  wallpapers: [1, 2].map(n => ({
+    ...wallpaper(`${season || 'all'}-${number}-${n}`, '6000x4000'), provider: 'unsplash',
+    photographer: { name: `${season || 'all-season'} photographer ${number}.${n}`, profile: 'https://unsplash.com/@lcars' },
+  })),
+});
+
 /**
  * @param {import('@playwright/test').Page} page
- * @param {{ sources?: (route: any) => Promise<void>, failing?: Record<string, string>,
- *           pageGate?: Promise<void>, apply?: (route: any) => Promise<void> }} [options]
+ * @param {{ sources?: (route: any) => Promise<void>, failing?: Record<string, string>, pageGate?: Promise<void>,
+ *           apply?: (route: any) => Promise<void>, seasonal?: boolean, requests?: URLSearchParams[] }} [options]
  */
 const backend = async (page, options = {}) => {
   const applied = [];
@@ -51,9 +61,12 @@ const backend = async (page, options = {}) => {
     const wallpapers = url.pathname.match(/^\/sources\/([^/]+)\/wallpapers$/);
     if (wallpapers) {
       const [, id] = wallpapers;
+      const number = Number(url.searchParams.get('page'));
+      if (id === 'fjords') options.requests?.push(url.searchParams);
       if (options.pageGate && id === 'trek') await options.pageGate;
       if (options.failing?.[id]) return json(route, 502, { reason: options.failing[id] });
-      return json(route, 200, PAGES[id][Number(url.searchParams.get('page')) - 1]);
+      if (options.seasonal && id === 'fjords') return json(route, 200, seasonalPage(url.searchParams.get('season'), number));
+      return json(route, 200, PAGES[id][number - 1]);
     }
     if (url.pathname === '/desktop/wallpaper' && route.request().method() === 'PUT') {
       applied.push(route.request().postDataJSON());
@@ -204,5 +217,77 @@ test.describe('R3: Apply a wallpaper', () => {
     await voyager.focus();
     await page.keyboard.press('Space');
     await expect(voyager).toContainText('Applied');
+  });
+});
+
+test.describe('R4: Filter by season', () => {
+
+  const photographers = (page, season) =>
+    section(page, 'Nature on Unsplash').getByRole('link', { name: new RegExp(`^${season} photographer`) });
+
+  test('R4.1 — offers a season filter in seasonal sections only', async ({ page }) => {
+    await backend(page);
+    await page.goto('/');
+    const filter = section(page, 'Nature on Unsplash').getByRole('group', { name: 'Season' });
+    await expect(filter.getByRole('radio')).toHaveCount(5);
+    for (const choice of ['All seasons', 'Spring', 'Summer', 'Autumn', 'Winter']) {
+      await expect(filter.getByRole('radio', { name: choice })).toBeVisible();
+    }
+    await expect(section(page, 'Star Trek').getByRole('radio')).toHaveCount(0);
+  });
+
+  test('R4.2 — preselects the current meteorological season of the northern hemisphere', async ({ page }) => {
+    const days = [
+      ['2026-02-28', 'Winter', 'winter'], ['2026-03-01', 'Spring', 'spring'], ['2026-05-31', 'Spring', 'spring'],
+      ['2026-06-01', 'Summer', 'summer'], ['2026-08-31', 'Summer', 'summer'], ['2026-09-01', 'Autumn', 'autumn'],
+      ['2026-11-30', 'Autumn', 'autumn'], ['2026-12-01', 'Winter', 'winter'],
+    ];
+    for (const [day, label, season] of days) {
+      const requests = [];
+      await page.unrouteAll();
+      await backend(page, { seasonal: true, requests });
+      await page.clock.setFixedTime(new Date(`${day}T12:00:00`));
+      await page.goto('/');
+      await expect(section(page, 'Nature on Unsplash').getByRole('radio', { name: label }), day).toBeChecked();
+      await expect(photographers(page, season), day).toHaveCount(2);
+      expect(requests.map(request => request.get('season')), day).toEqual([season]);
+    }
+  });
+
+  test('R4.3 — replaces the cards with the first page for the chosen season', async ({ page }) => {
+    const requests = [];
+    await backend(page, { seasonal: true, requests });
+    await page.clock.setFixedTime(new Date('2026-11-04T12:00:00'));
+    await page.goto('/');
+    await expect(photographers(page, 'autumn')).toHaveCount(2);
+    await section(page, 'Nature on Unsplash').getByRole('radio', { name: 'Spring' }).check();
+    await expect(photographers(page, 'spring')).toHaveCount(2);
+    await expect(photographers(page, 'autumn')).toHaveCount(0);
+    await expect(section(page, 'Nature on Unsplash').getByRole('button', { name: /^Apply/ })).toHaveCount(2);
+    expect(requests.at(-1).toString()).toBe('page=1&season=spring');
+  });
+
+  test('R4.4 — loads the next page within the chosen season', async ({ page }) => {
+    const requests = [];
+    await backend(page, { seasonal: true, requests });
+    await page.clock.setFixedTime(new Date('2026-11-04T12:00:00'));
+    await page.goto('/');
+    await section(page, 'Nature on Unsplash').getByRole('radio', { name: 'Winter' }).check();
+    await expect(photographers(page, 'winter')).toHaveCount(2);
+    await section(page, 'Nature on Unsplash').getByRole('button', { name: 'Load more Nature on Unsplash wallpapers' }).click();
+    await expect(photographers(page, 'winter')).toHaveCount(4);
+    expect(requests.at(-1).toString()).toBe('page=2&season=winter');
+  });
+
+  test('R4.5 — shows the source unfiltered for all seasons', async ({ page }) => {
+    const requests = [];
+    await backend(page, { seasonal: true, requests });
+    await page.clock.setFixedTime(new Date('2026-11-04T12:00:00'));
+    await page.goto('/');
+    await expect(photographers(page, 'autumn')).toHaveCount(2);
+    await section(page, 'Nature on Unsplash').getByRole('radio', { name: 'All seasons' }).check();
+    await expect(photographers(page, 'all-season')).toHaveCount(2);
+    await expect(photographers(page, 'autumn')).toHaveCount(0);
+    expect(requests.at(-1).has('season')).toBe(false);
   });
 });

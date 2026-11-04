@@ -80,29 +80,58 @@ class CatalogTest {
 
     @ParameterizedTest(name = "{0}")
     @MethodSource("listWallpapersCases")
-    void listWallpapers(Requirement.Rn requirement, String source, int page,
+    void listWallpapers(Requirement.Rn requirement, String source, int page, String season,
                         Consumer<Fixture> arrange, BiConsumer<Fixture, Outcome<Wallpaper.Page>> expectation) {
         arrange.accept(fixture);
-        var outcome = Outcome.of(() -> fixture.catalog().page(fixture.idOf(source), page));
+        var outcome = Outcome.of(() -> fixture.catalog().page(fixture.idOf(source), page, season));
         expectation.accept(fixture, outcome);
     }
 
     static Stream<Arguments> listWallpapersCases() {
         return Stream.of(
-                arguments(R2_1, "Star Trek", 1, arrange(f -> f.stub().reply("/api/v1/search", search(1, 3, item("enterprise", "sfw"), item("voyager", "sfw")))),
+                arguments(R2_1, "Star Trek", 1, "", arrange(f -> f.stub().reply("/api/v1/search", search(1, 3, item("enterprise", "sfw"), item("voyager", "sfw")))),
                         expect(CatalogTest::firstPage)),
-                arguments(R2_2, "Star Trek", 3, arrange(f -> f.stub().reply("/api/v1/search", search(3, 3, item("defiant", "sfw")))),
+                arguments(R2_2, "Star Trek", 3, "", arrange(f -> f.stub().reply("/api/v1/search", search(3, 3, item("defiant", "sfw")))),
                         expect(CatalogTest::lastPage)),
-                arguments(R2_3, "Star Trek", 1, arrange(f -> f.stub().reply("/api/v1/search", search(1, 1, item("enterprise", "sfw"), item("orion", "sketchy"), item("risa", "nsfw")))),
+                arguments(R2_3, "Star Trek", 1, "", arrange(f -> f.stub().reply("/api/v1/search", search(1, 1, item("enterprise", "sfw"), item("orion", "sketchy"), item("risa", "nsfw")))),
                         expect(CatalogTest::safeForWorkWithSourceQuery)),
-                arguments(R2_4, "Unsplash Nature", 1, arrange(f -> f.stub().reply("/search/photos", unsplashSearch(2, photo("fjord", "https://images.unsplash.com/download")))),
+                arguments(R2_4, "Unsplash Nature", 1, "", arrange(f -> f.stub().reply("/search/photos", unsplashSearch(2, photo("fjord", "https://images.unsplash.com/download")))),
                         expect(CatalogTest::attributedAndAuthorized)),
-                arguments(R2_5, "Unsplash Nature", 1, arrange(CatalogTest::withoutUnsplashKey),
+                arguments(R2_5, "Unsplash Nature", 1, "", arrange(CatalogTest::withoutUnsplashKey),
                         expect(CatalogTest::missingKeySparesWallhaven)),
-                arguments(R2_6, "Star Trek", 1, arrange(f -> f.stub().reply("/api/v1/search", 500, "{}", Map.of())),
+                arguments(R2_6, "Star Trek", 1, "", arrange(f -> f.stub().reply("/api/v1/search", 500, "{}", Map.of())),
                         expect(CatalogTest::providerFailureNamesSource)),
-                arguments(R2_7, "Elsewhere", 1, arrange(_ -> {}),
-                        expect(CatalogTest::unusableSourceRejected)));
+                arguments(R2_7, "Elsewhere", 1, "", arrange(_ -> {}),
+                        expect(CatalogTest::unusableSourceRejected)),
+                arguments(R2_8, "Unsplash Nature", 1, "autumn", arrange(CatalogTest::bothProvidersAnswer),
+                        expect(CatalogTest::seasonAddedToSearchTerms)),
+                arguments(R2_9, "Star Trek", 1, "winter", arrange(_ -> {}),
+                        expect(CatalogTest::seasonOnNonSeasonalRejected)),
+                arguments(R2_10, "Nature", 1, "monsoon", arrange(_ -> {}),
+                        expect(CatalogTest::unknownSeasonRejected)));
+    }
+
+    static void bothProvidersAnswer(Fixture fixture) {
+        fixture.stub().reply("/search/photos", unsplashSearch(1, photo("maple", "https://images.unsplash.com/download")));
+        fixture.stub().reply("/api/v1/search", search(1, 1, item("larch", "sfw")));
+    }
+
+    static void seasonAddedToSearchTerms(Fixture fixture, Outcome<Wallpaper.Page> outcome) {
+        assertThat(outcome.value().wallpapers()).extracting(Wallpaper::id).containsExactly("maple");
+        assertThat(fixture.stub().last("/search/photos").query().split("&")).containsExactly("query=nature%20autumn", "per_page=2", "page=1");
+        var wallhaven = fixture.catalog().page(fixture.idOf("Nature"), 1, "spring");
+        assertThat(wallhaven.wallpapers()).extracting(Wallpaper::id).containsExactly("larch");
+        assertThat(fixture.stub().last("/api/v1/search").query().split("&")).containsExactly("atleast=3840x2160", "q=nature%20spring", "purity=100", "page=1");
+    }
+
+    static void seasonOnNonSeasonalRejected(Fixture fixture, Outcome<Wallpaper.Page> outcome) {
+        rejected(outcome.error(), 400, "source 'Star Trek' is not seasonal");
+        assertThat(fixture.stub().received).isEmpty();
+    }
+
+    static void unknownSeasonRejected(Fixture fixture, Outcome<Wallpaper.Page> outcome) {
+        rejected(outcome.error(), 400, "unknown season monsoon, expected spring, summer, autumn or winter");
+        assertThat(fixture.stub().received).isEmpty();
     }
 
     static void firstPage(Fixture fixture, Outcome<Wallpaper.Page> outcome) {
@@ -147,21 +176,21 @@ class CatalogTest {
     static void missingKeySparesWallhaven(Fixture fixture, Outcome<Wallpaper.Page> outcome) {
         rejected(outcome.error(), 503, "UNSPLASH_ACCESS_KEY");
         assertThat(fixture.stub().received).noneMatch(request -> request.path().equals("/search/photos"));
-        var wallhaven = fixture.catalog().page(fixture.idOf("Star Trek"), 1);
+        var wallhaven = fixture.catalog().page(fixture.idOf("Star Trek"), 1, "");
         assertThat(wallhaven.wallpapers()).extracting(Wallpaper::id).containsExactly("enterprise");
     }
 
     static void providerFailureNamesSource(Fixture fixture, Outcome<Wallpaper.Page> outcome) {
         rejected(outcome.error(), 502, "source 'Star Trek' answered HTTP 500");
         fixture.catalog().wallhaven.base = closedPort();
-        var unreachable = Outcome.of(() -> fixture.catalog().page(fixture.idOf("Star Trek"), 1));
+        var unreachable = Outcome.of(() -> fixture.catalog().page(fixture.idOf("Star Trek"), 1, ""));
         rejected(unreachable.error(), 502, "source 'Star Trek' is unreachable");
     }
 
     static void unusableSourceRejected(Fixture fixture, Outcome<Wallpaper.Page> outcome) {
         rejected(outcome.error(), 400, "source 'Elsewhere' is unsupported");
-        rejected(Outcome.of(() -> fixture.catalog().page(fixture.idOf("No Url"), 1)).error(), 400, "source 'No Url' is invalid: missing url");
-        rejected(Outcome.of(() -> fixture.catalog().page("tribble", 1)).error(), 404, "unknown source tribble");
+        rejected(Outcome.of(() -> fixture.catalog().page(fixture.idOf("No Url"), 1, "")).error(), 400, "source 'No Url' is invalid: missing url");
+        rejected(Outcome.of(() -> fixture.catalog().page("tribble", 1, "")).error(), 404, "unknown source tribble");
         assertThat(fixture.stub().received).isEmpty();
     }
 

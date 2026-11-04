@@ -140,6 +140,47 @@ b-gallery-section > section {
     }
 }
 
+.seasons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-sm);
+    margin: 0;
+    padding: 0;
+    border: none;
+
+    & legend {
+        padding: 0;
+        margin-block-end: var(--spacing-xs);
+        color: var(--color-muted);
+    }
+
+    & label {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-xs);
+        padding: var(--spacing-xs) var(--spacing-md);
+        border: 1px solid var(--color-primary);
+        border-radius: var(--radius-md);
+        color: var(--color-primary);
+        cursor: pointer;
+
+        &:has(input:checked) {
+            background: var(--color-primary);
+            color: var(--color-surface);
+        }
+
+        &:has(input:focus-visible) {
+            outline: var(--focus-ring);
+            outline-offset: 2px;
+        }
+    }
+
+    & input {
+        margin: 0;
+        accent-color: var(--color-surface);
+    }
+}
+
 .status {
     color: var(--color-muted);
 }

@@ -28,12 +28,14 @@ public class SourcesFile {
               {
                 "title": "Nature",
                 "description": "Landscapes, forests and mountains",
-                "url": "https://wallhaven.cc/api/v1/search?q=nature&atleast=3840x2160&sorting=relevance"
+                "url": "https://wallhaven.cc/api/v1/search?q=nature&atleast=3840x2160&sorting=relevance",
+                "seasonal": true
               },
               {
                 "title": "Nature on Unsplash",
                 "description": "Landscape photography from Unsplash",
-                "url": "https://api.unsplash.com/search/photos?query=nature%20landscape&orientation=landscape&per_page=24"
+                "url": "https://api.unsplash.com/search/photos?query=nature%20landscape&orientation=landscape&per_page=24",
+                "seasonal": true
               }
             ]
             """;

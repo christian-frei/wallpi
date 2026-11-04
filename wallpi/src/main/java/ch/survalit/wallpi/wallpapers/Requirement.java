@@ -29,6 +29,12 @@ public @interface Requirement {
         R1_6("R1.6", "If a source entry lacks a title or a url, then the BC shall return that entry marked invalid with the reason, and still return all other sources."),
         /// If a source url's host is neither Wallhaven nor Unsplash, then the BC shall return that source marked unsupported, and still return all other sources.
         R1_7("R1.7", "If a source url's host is neither Wallhaven nor Unsplash, then the BC shall return that source marked unsupported, and still return all other sources."),
+        /// When sources are listed, the BC shall report for each source whether it is seasonal, not seasonal unless the entry says so.
+        R1_8("R1.8", "When sources are listed, the BC shall report for each source whether it is seasonal, not seasonal unless the entry says so."),
+        /// If a source entry's seasonal flag is neither true nor false, then the BC shall return that entry marked invalid with the reason, and still return all other sources.
+        R1_9("R1.9", "If a source entry's seasonal flag is neither true nor false, then the BC shall return that entry marked invalid with the reason, and still return all other sources."),
+        /// When the BC creates the default sources file, it shall mark the nature sources seasonal.
+        R1_10("R1.10", "When the BC creates the default sources file, it shall mark the nature sources seasonal."),
         /// When the wallpapers of a source are requested, the BC shall return the first page of the provider's results, each with a wallpaper id, a preview image and the original's resolution.
         R2_1("R2.1", "When the wallpapers of a source are requested, the BC shall return the first page of the provider's results, each with a wallpaper id, a preview image and the original's resolution."),
         /// When a further page of a source is requested, the BC shall return that page of the same query together with whether another page exists.
@@ -43,6 +49,12 @@ public @interface Requirement {
         R2_6("R2.6", "If the provider is unreachable or answers with an error, then the BC shall reject the request with a reason naming the source."),
         /// If the requested source does not exist or is invalid or unsupported, then the BC shall reject the request.
         R2_7("R2.7", "If the requested source does not exist or is invalid or unsupported, then the BC shall reject the request."),
+        /// When the wallpapers of a seasonal source are requested for a season, the BC shall add the season's name to the source's search terms.
+        R2_8("R2.8", "When the wallpapers of a seasonal source are requested for a season, the BC shall add the season's name to the source's search terms."),
+        /// If a season is requested for a source that is not seasonal, then the BC shall reject the request.
+        R2_9("R2.9", "If a season is requested for a source that is not seasonal, then the BC shall reject the request."),
+        /// If the requested season is not spring, summer, autumn or winter, then the BC shall reject the request.
+        R2_10("R2.10", "If the requested season is not spring, summer, autumn or winter, then the BC shall reject the request."),
         /// When the original of a Wallhaven wallpaper is resolved, the BC shall return the location and resolution of its full-resolution image.
         R3_1("R3.1", "When the original of a Wallhaven wallpaper is resolved, the BC shall return the location and resolution of its full-resolution image."),
         /// When the original of an Unsplash wallpaper is resolved, the BC shall return the location and resolution of its raw image and register the download with Unsplash.

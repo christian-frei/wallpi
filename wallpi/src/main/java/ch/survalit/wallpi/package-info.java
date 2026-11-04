@@ -14,6 +14,7 @@
 /// - Wallpaper — one image a source yields, identified within its provider; has a preview and an original.
 /// - Preview — the small image shown on a card.
 /// - Original — the largest available image of a wallpaper.
+/// - Season — spring, summer, autumn or winter; narrows the wallpapers of a seasonal source. Owned by `wallpapers`.
 ///
 /// ## Decisions
 /// - D1 — Wallhaven and Unsplash are the providers, told apart by the source url's host. _(why: both cover Star Trek and nature, Wallhaven without a key; rejected: NASA Image Library)_

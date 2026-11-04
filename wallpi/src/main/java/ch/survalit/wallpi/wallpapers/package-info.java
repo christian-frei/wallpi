@@ -15,6 +15,9 @@
 /// - R1.5 — If the sources file is not valid JSON, then the BC shall reject the listing with a reason naming the file.
 /// - R1.6 — If a source entry lacks a title or a url, then the BC shall return that entry marked invalid with the reason, and still return all other sources.
 /// - R1.7 — If a source url's host is neither Wallhaven nor Unsplash, then the BC shall return that source marked unsupported, and still return all other sources.
+/// - R1.8 — When sources are listed, the BC shall report for each source whether it is seasonal, not seasonal unless the entry says so.
+/// - R1.9 — If a source entry's seasonal flag is neither true nor false, then the BC shall return that entry marked invalid with the reason, and still return all other sources.
+/// - R1.10 — When the BC creates the default sources file, it shall mark the nature sources seasonal.
 ///
 /// ### R2: List wallpapers
 /// - R2.1 — When the wallpapers of a source are requested, the BC shall return the first page of the provider's results, each with a wallpaper id, a preview image and the original's resolution.
@@ -24,6 +27,9 @@
 /// - R2.5 — If no Unsplash access key is configured, then the BC shall reject wallpaper requests for Unsplash sources with a reason naming the missing key, and keep serving Wallhaven sources.
 /// - R2.6 — If the provider is unreachable or answers with an error, then the BC shall reject the request with a reason naming the source.
 /// - R2.7 — If the requested source does not exist or is invalid or unsupported, then the BC shall reject the request.
+/// - R2.8 — When the wallpapers of a seasonal source are requested for a season, the BC shall add the season's name to the source's search terms.
+/// - R2.9 — If a season is requested for a source that is not seasonal, then the BC shall reject the request.
+/// - R2.10 — If the requested season is not spring, summer, autumn or winter, then the BC shall reject the request.
 ///
 /// ### R3: Resolve original
 /// - R3.1 — When the original of a Wallhaven wallpaper is resolved, the BC shall return the location and resolution of its full-resolution image.
@@ -31,7 +37,7 @@
 /// - R3.3 — If the provider does not know the wallpaper, then the BC shall reject the resolution.
 ///
 /// ## Entities
-/// - Source, Wallpaper, Provider
+/// - Source, Wallpaper, Provider, Season
 ///
 /// ## Out of scope
 /// - Editing sources from the UI — the JSON file is edited by hand.

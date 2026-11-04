@@ -5,6 +5,7 @@
 - `browse-sources` — show all sources with the first page of their wallpapers
 - `load-more` — append the next page of a source's wallpapers
 - `apply-wallpaper` — put the chosen card's wallpaper on all screens
+- `filter-by-season` — choose the season a seasonal section shows
 
 ## Requirements
 ### R1: Browse sources
@@ -25,6 +26,13 @@
 - R3.3 — If applying fails, then the BC shall show the reason on that card.
 - R3.4 — While a wallpaper is being applied, the BC shall prevent choosing another card.
 - R3.5 — The BC shall let every card be chosen by keyboard as well as by pointer.
+
+### R4: Filter by season
+- R4.1 — Where a source is seasonal, the BC shall offer a season filter in its section with the choices all seasons, spring, summer, autumn and winter.
+- R4.2 — When the gallery opens, the BC shall preselect the current meteorological season of the northern hemisphere: spring March to May, summer June to August, autumn September to November, winter December to February.
+- R4.3 — When a season is chosen, the BC shall replace the section's cards with the first page of wallpapers for that season.
+- R4.4 — While a season is chosen, when more wallpapers are requested, the BC shall load the next page for that season.
+- R4.5 — When all seasons is chosen, the BC shall show the source's wallpapers unfiltered.
 
 ## Entities
 - Source, Wallpaper

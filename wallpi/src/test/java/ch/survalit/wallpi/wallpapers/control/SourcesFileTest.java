@@ -72,11 +72,14 @@ class SourcesFileTest {
                 arguments(R1_4, null, (Consumer<Listing>) SourcesFileTest::createsDefaults),
                 arguments(R1_5, "[{\"title\": ", (Consumer<Listing>) SourcesFileTest::rejectsBrokenJson),
                 arguments(R1_6, SOURCES, (Consumer<Listing>) SourcesFileTest::marksIncompleteEntries),
-                arguments(R1_7, SOURCES, (Consumer<Listing>) SourcesFileTest::marksUnknownHosts));
+                arguments(R1_7, SOURCES, (Consumer<Listing>) SourcesFileTest::marksUnknownHosts),
+                arguments(R1_8, SOURCES, (Consumer<Listing>) SourcesFileTest::reportsSeasonal),
+                arguments(R1_9, SOURCES, (Consumer<Listing>) SourcesFileTest::marksNonBooleanSeasonalInvalid),
+                arguments(R1_10, null, (Consumer<Listing>) SourcesFileTest::defaultsMarkNatureSeasonal));
     }
 
     static void inFileOrder(Listing listing) {
-        assertThat(listing.titles()).containsExactly("Star Trek", "Unsplash Nature", "No Url", "", "Elsewhere");
+        assertThat(listing.titles()).containsExactly("Star Trek", "Unsplash Nature", "No Url", "", "Elsewhere", "Nature", "Bad Flag");
         var starTrek = listing.titled("Star Trek");
         assertThat(starTrek.description()).isEqualTo("The final frontier");
         assertThat(starTrek.url()).isEqualTo(URI.create("https://wallhaven.cc/api/v1/search?q=star%20trek&atleast=3840x2160&purity=111&page=7"));
@@ -113,7 +116,7 @@ class SourcesFileTest {
         assertThat(listing.titled("").status()).isEqualTo(Status.INVALID);
         assertThat(listing.titled("").reason()).isEqualTo("missing title");
         assertThat(listing.titled("Star Trek").status()).isEqualTo(Status.VALID);
-        assertThat(listing.sources()).hasSize(5);
+        assertThat(listing.sources()).hasSize(7);
     }
 
     static void marksUnknownHosts(Listing listing) {
@@ -121,7 +124,30 @@ class SourcesFileTest {
         assertThat(elsewhere.status()).isEqualTo(Status.UNSUPPORTED);
         assertThat(elsewhere.reason()).isEqualTo("unsupported host example.com, expected wallhaven.cc or api.unsplash.com");
         assertThat(listing.titled("Unsplash Nature").status()).isEqualTo(Status.VALID);
-        assertThat(listing.sources()).hasSize(5);
+        assertThat(listing.sources()).hasSize(7);
+    }
+
+    static void reportsSeasonal(Listing listing) {
+        assertThat(listing.titled("Unsplash Nature").seasonal()).isTrue();
+        assertThat(listing.titled("Nature").seasonal()).isTrue();
+        assertThat(listing.titled("Star Trek").seasonal()).isFalse();
+        assertThat(listing.titled("Nature").toJSON().getBoolean("seasonal")).isTrue();
+        assertThat(listing.titled("Star Trek").toJSON().getBoolean("seasonal")).isFalse();
+    }
+
+    static void marksNonBooleanSeasonalInvalid(Listing listing) {
+        var badFlag = listing.titled("Bad Flag");
+        assertThat(badFlag.status()).isEqualTo(Status.INVALID);
+        assertThat(badFlag.reason()).isEqualTo("seasonal must be true or false");
+        assertThat(listing.titled("Nature").status()).isEqualTo(Status.VALID);
+        assertThat(listing.sources()).hasSize(7);
+    }
+
+    static void defaultsMarkNatureSeasonal(Listing listing) {
+        assertThat(listing.sources())
+                .filteredOn(Source::seasonal)
+                .extracting(Source::title)
+                .containsExactly("Nature", "Nature on Unsplash");
     }
 
     static void write(SourcesFile sources, String content) {
