@@ -30,6 +30,12 @@ macOS, Java 25+, Maven 3.9+. Node.js only for the browser tests.
 
 Builds on first start, serves http://localhost:9447 (loopback only) and opens it in the browser. Run `./start.sh --build` after changing Java code; frontend changes in `app/src` show on reload.
 
+```
+./stop.sh
+```
+
+Stops every wallpi instance listening on port 9447; another program on that port is reported and left running.
+
 The first apply triggers a macOS prompt to let Java control System Events — allow it, or applying fails with error `-1743`.
 
 ## Configuration
