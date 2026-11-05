@@ -1,5 +1,6 @@
 # build output
 wallpi/target/
+cli/zbo/
 
 # browser test harness
 tests/node_modules/

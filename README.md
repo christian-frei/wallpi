@@ -20,7 +20,23 @@ flowchart LR
 
 ## Prerequisites
 
-macOS, Java 25+, Maven 3.9+. Node.js only for the browser tests.
+macOS, Java 25+, Maven 3.9+, [zb](https://github.com/AdamBien/zb) for `install.sh`. Node.js only for the browser tests.
+
+## Install
+
+```
+./install.sh
+```
+
+Builds the server with Maven and the `wallpi` launcher with [zb](https://github.com/AdamBien/zb), copies both with the frontend into `~/.local/share/wallpi` and writes the `wallpi` command into `~/bin`. Override with `WALLPI_HOME` and `BIN_DIR`; rerun after every change.
+
+```
+wallpi          # start in the background and open http://localhost:9447
+wallpi stop     # stop the server
+wallpi status   # tell whether it runs
+```
+
+The server logs to `~/.local/share/wallpi/wallpi.log`.
 
 ## Run
 
